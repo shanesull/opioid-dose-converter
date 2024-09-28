@@ -31,7 +31,17 @@ const opioids = [
 	{ name: "Codeine", routes: ["PO"] },
 ];
 
-const conversionRatios = {
+// Define types for the conversion ratios
+type OpioidRoute = string;
+type ConversionValue = number | string | { [dose: number]: string };
+
+interface ConversionRatios {
+	[key: OpioidRoute]: {
+		[key: OpioidRoute]: ConversionValue;
+	};
+}
+
+const conversionRatios: ConversionRatios = {
 	"Morphine PO": {
 		"Morphine SC": 0.5,
 		"Oxycodone PO": 0.5,
@@ -226,29 +236,34 @@ export default function Component() {
 		}
 
 		if (
-			conversionRatios[fromKey] &&
-			conversionRatios[fromKey][toKey] !== undefined
+			fromKey in conversionRatios &&
+			toKey in conversionRatios[fromKey as OpioidRoute]
 		) {
+			const conversion =
+				conversionRatios[fromKey as OpioidRoute][toKey as OpioidRoute];
+
 			if (fromKey === "Fentanyl Transdermal") {
-				const doseRanges = Object.keys(conversionRatios[fromKey][toKey])
-					.map(Number)
-					.sort((a, b) => a - b);
-				const closestDose =
-					doseRanges.find((d) => d >= dose) ||
-					doseRanges[doseRanges.length - 1];
-				const convertedPatch = conversionRatios[fromKey][toKey][closestDose];
-				if (convertedPatch === "n/a") {
-					setError(
-						"No appropriate patch strength available for this conversion.",
-					);
-				} else {
-					setConvertedDose(convertedPatch);
+				// Handle Fentanyl Transdermal conversion
+				if (typeof conversion === "object" && !Array.isArray(conversion)) {
+					const doseRanges = Object.keys(conversion)
+						.map(Number)
+						.sort((a, b) => a - b);
+					const closestDose =
+						doseRanges.find((d) => d >= dose) ||
+						doseRanges[doseRanges.length - 1];
+					const convertedPatch = conversion[closestDose];
+					if (convertedPatch === "n/a") {
+						setError(
+							"No appropriate patch strength available for this conversion.",
+						);
+					} else {
+						setConvertedDose(convertedPatch);
+					}
 				}
-			} else if (conversionRatios[fromKey][toKey] === "n/a") {
+			} else if (conversion === "n/a") {
 				setError("No product available for the given dose and conversion.");
-			} else {
-				const ratio = conversionRatios[fromKey][toKey];
-				const result = dose * ratio;
+			} else if (typeof conversion === "number") {
+				const result = dose * conversion;
 				setConvertedDose(result.toFixed(2));
 			}
 		} else if (fromKey === toKey) {
