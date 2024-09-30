@@ -166,6 +166,14 @@ const conversionRatios: ConversionRatios = {
 			"75mcg/hour": 90,
 			fallbackRatio: 6 / 5,
 		},
+		"Oxycodone PO": 7.5 / 6, // 100mcg Fentanyl SC = 5mg Oxycodone PO
+		"Oxycodone SC": 3.75 / 6, // 100mcg Fentanyl SC = 2.5mg Oxycodone SC
+		"Hydromorphone PO": 2 / 6, // 100mcg Fentanyl SC = 1.3mg Hydromorphone PO
+		"Hydromorphone SC": 1 / 6, // 100mcg Fentanyl SC = 0.6mg Hydromorphone SC
+		"Alfentanil SC": 0.5 / 6, // 100mcg Fentanyl SC = 0.3mg Alfentanil SC
+		"Buprenorphine Transdermal": 35 / 25, // No direct equivalent
+		"Tramadol PO": 150 / 6, // 100mcg Fentanyl SC = 50mg Tramadol PO
+		"Codeine PO": 150 / 6, // 100mcg Fentanyl SC = 50mg Codeine PO
 	},
 	"Fentanyl SC": {
 		"Morphine PO": 0.1,
