@@ -219,12 +219,12 @@ const conversionRatios: ConversionRatios = {
 		"Morphine SC": 0.05,
 		"Oxycodone PO": 0.05,
 		"Oxycodone SC": 0.025,
-		"Hydromorphone PO": 0.01,
-		"Hydromorphone SC": 0.005,
-		"Fentanyl Transdermal": "n/a", // No direct equivalent
-		"Fentanyl SC": 0.005,
-		"Alfentanil SC": 0.01,
-		"Buprenorphine Transdermal": "n/a", // No direct equivalent
+		"Hydromorphone PO": 1.3 / 100,
+		"Hydromorphone SC": 0.6 / 100,
+		"Fentanyl Transdermal": 6 / 150, // No direct equivalent
+		"Fentanyl SC": 1,
+		"Alfentanil SC": 0.3 / 100,
+		"Buprenorphine Transdermal": 0.05, // No direct equivalent
 		"Codeine PO": 1, // Equivalent to Codeine conversion
 	},
 	"Codeine PO": {
@@ -232,13 +232,13 @@ const conversionRatios: ConversionRatios = {
 		"Morphine SC": 0.05,
 		"Oxycodone PO": 0.05,
 		"Oxycodone SC": 0.025,
-		"Hydromorphone PO": 0.01,
-		"Hydromorphone SC": 0.005,
-		"Fentanyl Transdermal": "n/a",
-		"Fentanyl SC": 0.005,
-		"Alfentanil SC": 0.01,
-		"Buprenorphine Transdermal": "n/a", // No direct equivalent
-		"Tramadol PO": 1,
+		"Hydromorphone PO": 1.3 / 100,
+		"Hydromorphone SC": 0.6 / 100,
+		"Fentanyl Transdermal": 6 / 150, // No direct equivalent
+		"Fentanyl SC": 1,
+		"Alfentanil SC": 0.3 / 100,
+		"Buprenorphine Transdermal": 0.05, // No direct equivalent
+		"Codeine PO": 1, // Equivalent to Codeine conversion
 	},
 };
 
