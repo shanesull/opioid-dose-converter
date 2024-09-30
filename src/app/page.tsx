@@ -362,6 +362,8 @@ export default function Component() {
 								<Input
 									id="from-dose"
 									type="number"
+									inputMode="decimal"
+									pattern="[0-9]*\.?[0-9]*"
 									value={fromDose}
 									onChange={(e) => setFromDose(e.target.value)}
 									placeholder="Enter dose"
@@ -499,10 +501,10 @@ export default function Component() {
 						</div>
 					)}
 				</div>
-				<p className="mt-6 text-sm text-gray-500">
+				{/* <p className="mt-6 text-sm text-gray-500">
 					GOLDEN RULE: When changing from one opioid to another, always convert
 					to Morphine PO first.
-				</p>
+				</p> */}
 			</div>
 		</TooltipProvider>
 	);
