@@ -33,7 +33,10 @@ const opioids = [
 
 // Define types for the conversion ratios
 type OpioidRoute = string;
-type ConversionValue = number | string | { [dose: number]: string };
+type ConversionValue =
+	| number
+	| string
+	| { [dose: number]: string; fallbackRatio?: number };
 
 interface ConversionRatios {
 	[key: OpioidRoute]: {
