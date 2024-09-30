@@ -269,8 +269,8 @@ export default function Component() {
 		const fromKey = `${fromDrug} ${fromRoute}`;
 		const toKey = `${toDrug} ${toRoute}`;
 
-		let dose = parseFloat(fromDose);
-		if (isNaN(dose)) {
+		const dose = parseFloat(fromDose);
+		if (Number.isNaN(dose)) {
 			return;
 		}
 
