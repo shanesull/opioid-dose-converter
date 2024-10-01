@@ -32,7 +32,6 @@ const opioids = [
 ];
 
 // Define types for the conversion ratios
-type OpioidRoute = string;
 type ConversionValue = number | string | [number, number];
 
 type ConversionObject = {
@@ -47,7 +46,13 @@ interface ConversionRatios {
 	};
 }
 
-const opioidUnits = {
+// Add this type definition
+type OpioidUnits = {
+	[key: string]: string;
+};
+
+// Modify the opioidUnits declaration
+const opioidUnits: OpioidUnits = {
 	"Morphine PO": "mg",
 	"Morphine SC": "mg",
 	"Oxycodone PO": "mg",
@@ -290,11 +295,15 @@ export default function Component() {
 		) {
 			const conversion = conversionRatios[fromKey][toKey];
 			if (typeof conversion === "object" && !Array.isArray(conversion)) {
-				const specificConversions = conversion as {
-					[key: string | number]: string | number | [number, number];
-					fallbackRatio?: number;
-				};
-				const exactMatch = specificConversions[dose];
+				type SpecificConversion = string | number | [number, number];
+				interface SpecificConversions {
+					[key: string | number]: SpecificConversion | number;
+				}
+				const specificConversions = conversion as SpecificConversions;
+
+				const doseLookup = dose.toString();
+				const exactMatch = specificConversions[doseLookup];
+
 				if (exactMatch !== undefined) {
 					if (Array.isArray(exactMatch)) {
 						setConvertedDose(`${exactMatch[0]} - ${exactMatch[1]}`);
@@ -303,7 +312,10 @@ export default function Component() {
 					}
 				} else {
 					const fallbackRatio = specificConversions.fallbackRatio;
-					if (fallbackRatio !== undefined) {
+					if (
+						fallbackRatio !== undefined &&
+						typeof fallbackRatio === "number"
+					) {
 						const result = dose * fallbackRatio;
 						setConvertedDose(result.toFixed(2));
 						setWarning(
@@ -311,16 +323,7 @@ export default function Component() {
 						);
 						setUsingFallback(true);
 					} else {
-						const closestDose = Object.keys(specificConversions)
-							.filter((key) => key !== "fallbackRatio")
-							.map(Number)
-							.reduce((a, b) =>
-								Math.abs(b - dose) < Math.abs(a - dose) ? b : a,
-							);
-						setConvertedDose(specificConversions[closestDose].toString());
-						setWarning(
-							"No exact match found. Using the closest available dose.",
-						);
+						setError("Invalid fallback ratio");
 					}
 				}
 			} else if (typeof conversion === "number") {
@@ -557,10 +560,12 @@ export default function Component() {
 						</Alert>
 					)}
 					{warning && (
-						<Alert variant="warning">
-							<AlertCircle className="h-4 w-4" />
-							<AlertTitle>Warning</AlertTitle>
-							<AlertDescription>{warning}</AlertDescription>
+						<Alert>
+							<AlertCircle className="h-4 w-4 text-yellow-500" />
+							<AlertTitle className="text-yellow-700">Warning</AlertTitle>
+							<AlertDescription className="text-yellow-600">
+								{warning}
+							</AlertDescription>
 						</Alert>
 					)}
 					{convertedDose && (
