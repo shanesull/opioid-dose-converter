@@ -38,8 +38,8 @@ type ConversionValue =
 	| string
 	| {
 			[key: string | number]: string | number;
-			fallbackRatio?: number;
-	  };
+	  }
+	| { fallbackRatio: number };
 
 interface ConversionRatios {
 	[key: OpioidRoute]: {
@@ -307,7 +307,7 @@ export default function Component() {
 							);
 						setConvertedDose(specificConversions[closestDose]);
 						setWarning(
-							"No exact match found. Using the closest available dose. Please consult with a healthcare professional.",
+							"No exact match found. Using the closest available dose.",
 						);
 					}
 				}
