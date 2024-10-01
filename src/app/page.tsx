@@ -37,9 +37,10 @@ type ConversionValue =
 	| number
 	| string
 	| {
-			[key: string | number]: string | number;
+			[key: string | number]: string | number | [number, number];
+			fallbackRatio?: number;
 	  }
-	| { fallbackRatio: number };
+	| [number, number];
 
 interface ConversionRatios {
 	[key: OpioidRoute]: {
@@ -208,7 +209,11 @@ const conversionRatios: ConversionRatios = {
 		"Codeine PO": 50,
 	},
 	"Buprenorphine Transdermal": {
-		"Morphine PO": 2,
+		"Morphine PO": {
+			"10": [20, 30],
+			"35": [60, 100],
+			fallbackRatio: 2,
+		},
 		"Morphine SC": 1,
 		"Oxycodone PO": 1,
 		"Oxycodone SC": 0.5,
@@ -284,14 +289,22 @@ export default function Component() {
 			conversionRatios[fromKey] &&
 			conversionRatios[fromKey][toKey] !== undefined
 		) {
-			if (typeof conversionRatios[fromKey][toKey] === "object") {
-				const specificConversions = conversionRatios[fromKey][toKey];
+			const conversion = conversionRatios[fromKey][toKey];
+			if (typeof conversion === "object" && !Array.isArray(conversion)) {
+				const specificConversions = conversion as {
+					[key: string | number]: string | number | [number, number];
+					fallbackRatio?: number;
+				};
 				const exactMatch = specificConversions[dose];
-				if (exactMatch) {
-					setConvertedDose(exactMatch.toString());
+				if (exactMatch !== undefined) {
+					if (Array.isArray(exactMatch)) {
+						setConvertedDose(`${exactMatch[0]} - ${exactMatch[1]}`);
+					} else {
+						setConvertedDose(exactMatch.toString());
+					}
 				} else {
 					const fallbackRatio = specificConversions.fallbackRatio;
-					if (fallbackRatio) {
+					if (fallbackRatio !== undefined) {
 						const result = dose * fallbackRatio;
 						setConvertedDose(result.toFixed(2));
 						setWarning(
@@ -305,16 +318,17 @@ export default function Component() {
 							.reduce((a, b) =>
 								Math.abs(b - dose) < Math.abs(a - dose) ? b : a,
 							);
-						setConvertedDose(specificConversions[closestDose]);
+						setConvertedDose(specificConversions[closestDose].toString());
 						setWarning(
 							"No exact match found. Using the closest available dose.",
 						);
 					}
 				}
-			} else {
-				const ratio = conversionRatios[fromKey][toKey];
-				const result = dose * ratio;
+			} else if (typeof conversion === "number") {
+				const result = dose * conversion;
 				setConvertedDose(result.toFixed(2));
+			} else {
+				setConvertedDose(conversion.toString());
 			}
 		} else if (fromKey === toKey) {
 			setConvertedDose(fromDose);
@@ -373,6 +387,9 @@ export default function Component() {
 	const displayConvertedDose = () => {
 		if (convertedDose.includes("mcg/hour")) {
 			return convertedDose;
+		} else if (convertedDose.includes(" - ")) {
+			const [min, max] = convertedDose.split(" - ");
+			return `${min} - ${max} ${opioidUnits[`${toDrug} ${toRoute}`] || ""}`;
 		} else {
 			return `${convertedDose} ${opioidUnits[`${toDrug} ${toRoute}`] || ""}`;
 		}
