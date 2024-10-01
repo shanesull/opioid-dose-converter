@@ -36,15 +36,14 @@ type OpioidRoute = string;
 type ConversionValue = number | string | [number, number];
 
 type ConversionObject = {
-	[key: string]: string | number;
-	fallbackRatio?: number;
+	[key: string | number]: ConversionValue | number | undefined;
 };
 
 type ConversionEntry = ConversionValue | ConversionObject;
 
 interface ConversionRatios {
-	[key: OpioidRoute]: {
-		[key: OpioidRoute]: ConversionEntry;
+	[key: string]: {
+		[key: string]: ConversionEntry;
 	};
 }
 
@@ -210,8 +209,8 @@ const conversionRatios: ConversionRatios = {
 	},
 	"Buprenorphine Transdermal": {
 		"Morphine PO": {
-			"10": [20, 30],
-			"35": [60, 100],
+			10: [20, 30],
+			35: [60, 100],
 			fallbackRatio: 2,
 		},
 		"Morphine SC": 1,
@@ -280,7 +279,7 @@ export default function Component() {
 		const fromKey = `${fromDrug} ${fromRoute}`;
 		const toKey = `${toDrug} ${toRoute}`;
 
-		const dose = parseFloat(fromDose);
+		const dose = Number.parseFloat(fromDose);
 		if (Number.isNaN(dose)) {
 			return;
 		}
@@ -308,7 +307,7 @@ export default function Component() {
 						const result = dose * fallbackRatio;
 						setConvertedDose(result.toFixed(2));
 						setWarning(
-							"This conversion uses a fallback ratio. The exact product may not be available. Please consult with a healthcare professional.",
+							"This conversion uses a fallback ratio. The exact product may not be available.",
 						);
 						setUsingFallback(true);
 					} else {
@@ -371,10 +370,10 @@ export default function Component() {
 
 	useEffect(() => {
 		if (convertedDose) {
-			const parsedDose = parseFloat(convertedDose);
-			if (!isNaN(parsedDose)) {
+			const parsedDose = Number.parseFloat(convertedDose);
+			if (!Number.isNaN(parsedDose)) {
 				const reduced =
-					parsedDose * (1 - parseFloat(reductionPercentage) / 100);
+					parsedDose * (1 - Number.parseFloat(reductionPercentage) / 100);
 				setReducedDose(reduced.toFixed(2));
 			} else {
 				setReducedDose("");
