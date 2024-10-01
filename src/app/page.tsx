@@ -83,7 +83,7 @@ const conversionRatios: ConversionRatios = {
 			fallbackRatio: 5 / 12,
 		},
 		"Fentanyl SC": 50 / 5,
-		"Alfentanil SC": 0.3 / 5,
+		"Alfentanil SC": 0.3 / 10,
 		"Buprenorphine Transdermal": 5 / 10,
 		"Tramadol PO": 10,
 		"Codeine PO": 10,
@@ -162,25 +162,33 @@ const conversionRatios: ConversionRatios = {
 	},
 	"Fentanyl Transdermal": {
 		"Morphine PO": {
-			"6mcg/hour": 15,
-			"12mcg/hour": 30,
-			"25mcg/hour": 60,
-			"50mcg/hour": 120,
-			"75mcg/hour": 180,
+			6: 15,
+			12: 30,
+			25: 60,
+			50: 120,
+			75: 180,
 			fallbackRatio: 12 / 5,
 		},
 		"Morphine SC": {
-			"6mcg/hour": 7.5,
-			"12mcg/hour": 15,
-			"25mcg/hour": 30,
-			"50mcg/hour": 60,
-			"75mcg/hour": 90,
+			6: 7.5,
+			12: 15,
+			25: 30,
+			50: 60,
+			75: 90,
 			fallbackRatio: 6 / 5,
 		},
 		"Oxycodone PO": 7.5 / 6, // 100mcg Fentanyl SC = 5mg Oxycodone PO
 		"Oxycodone SC": 3.75 / 6, // 100mcg Fentanyl SC = 2.5mg Oxycodone SC
 		"Hydromorphone PO": 2 / 6, // 100mcg Fentanyl SC = 1.3mg Hydromorphone PO
 		"Hydromorphone SC": 1 / 6, // 100mcg Fentanyl SC = 0.6mg Hydromorphone SC
+		"Fentanyl SC": {
+			6: 150,
+			12: 300,
+			25: 600,
+			50: 1200,
+			75: 1800,
+			fallbackRatio: 150 / 6,
+		},
 		"Alfentanil SC": 0.5 / 6, // 100mcg Fentanyl SC = 0.3mg Alfentanil SC
 		"Buprenorphine Transdermal": 35 / 25, // No direct equivalent
 		"Tramadol PO": 150 / 6, // 100mcg Fentanyl SC = 50mg Tramadol PO
@@ -214,8 +222,11 @@ const conversionRatios: ConversionRatios = {
 	},
 	"Buprenorphine Transdermal": {
 		"Morphine PO": {
+			5: 10,
 			10: [20, 30],
+			20: 50,
 			35: [60, 100],
+			52.5: 120,
 			fallbackRatio: 2,
 		},
 		"Morphine SC": 1,
@@ -270,6 +281,20 @@ export default function Component() {
 	const [reducedDose, setReducedDose] = useState("");
 	const [usingFallback, setUsingFallback] = useState(false);
 
+	const handleFromDrugChange = (selectedDrug: string) => {
+		setFromDrug(selectedDrug);
+		const defaultRoute =
+			opioids.find((o) => o.name === selectedDrug)?.routes[0] || "";
+		setFromRoute(defaultRoute);
+	};
+
+	const handleToDrugChange = (selectedDrug: string) => {
+		setToDrug(selectedDrug);
+		const defaultRoute =
+			opioids.find((o) => o.name === selectedDrug)?.routes[0] || "";
+		setToRoute(defaultRoute);
+	};
+
 	const handleConvert = () => {
 		setError("");
 		setWarning("");
@@ -278,6 +303,7 @@ export default function Component() {
 		setUsingFallback(false);
 
 		if (!fromDrug || !fromRoute || !toDrug || !toRoute || !fromDose) {
+			setError("Please complete all fields before converting.");
 			return;
 		}
 
@@ -286,29 +312,45 @@ export default function Component() {
 
 		const dose = Number.parseFloat(fromDose);
 		if (Number.isNaN(dose)) {
+			setError("Please enter a valid numeric dose.");
 			return;
 		}
 
+		// Check if a direct conversion is available
 		if (
 			conversionRatios[fromKey] &&
 			conversionRatios[fromKey][toKey] !== undefined
 		) {
 			const conversion = conversionRatios[fromKey][toKey];
 			if (typeof conversion === "object" && !Array.isArray(conversion)) {
-				type SpecificConversion = string | number | [number, number];
-				interface SpecificConversions {
-					[key: string | number]: SpecificConversion | number;
+				// Handle specific conversions and fallback ratio
+				const specificConversions = conversion as {
+					[key: string]: number | string | [number, number];
+				};
+
+				let result: string | number | [number, number] = "";
+				let foundMatch = false;
+
+				const thresholds = Object.keys(specificConversions)
+					.filter((key) => key !== "fallbackRatio")
+					.map(Number)
+					.sort((a, b) => a - b);
+
+				// Try to find an exact match for the dose
+				for (const threshold of thresholds) {
+					if (dose === threshold) {
+						result = specificConversions[threshold];
+						foundMatch = true;
+						break;
+					}
 				}
-				const specificConversions = conversion as SpecificConversions;
 
-				const doseLookup = dose.toString();
-				const exactMatch = specificConversions[doseLookup];
-
-				if (exactMatch !== undefined) {
-					if (Array.isArray(exactMatch)) {
-						setConvertedDose(`${exactMatch[0]} - ${exactMatch[1]}`);
+				if (foundMatch) {
+					// Check if result is an array, meaning it's a range
+					if (Array.isArray(result)) {
+						setConvertedDose(`${result[0]} - ${result[1]}`);
 					} else {
-						setConvertedDose(exactMatch.toString());
+						setConvertedDose(result.toString());
 					}
 				} else {
 					const fallbackRatio = specificConversions.fallbackRatio;
@@ -316,14 +358,17 @@ export default function Component() {
 						fallbackRatio !== undefined &&
 						typeof fallbackRatio === "number"
 					) {
-						const result = dose * fallbackRatio;
-						setConvertedDose(result.toFixed(2));
+						// If no exact match, use fallback ratio
+						const fallbackResult = dose * fallbackRatio;
+						setConvertedDose(fallbackResult.toFixed(2));
 						setWarning(
 							"This conversion uses a fallback ratio. The exact product may not be available.",
 						);
 						setUsingFallback(true);
 					} else {
-						setError("Invalid fallback ratio");
+						setError(
+							"No valid conversion or fallback ratio found for the selected drugs.",
+						);
 					}
 				}
 			} else if (typeof conversion === "number") {
@@ -333,16 +378,13 @@ export default function Component() {
 				setConvertedDose(conversion.toString());
 			}
 		} else if (fromKey === toKey) {
+			// If converting to the same drug and route
 			setConvertedDose(fromDose);
 		} else {
-			// Use a general fallback ratio when no direct conversion is available
-			const generalFallbackRatio = 1; // You may want to adjust this value
-			const result = dose * generalFallbackRatio;
-			setConvertedDose(result.toFixed(2));
-			setWarning(
-				"This conversion uses a general fallback ratio. The product may not be available or the conversion may not be accurate. Please consult with a healthcare professional.",
+			// If no direct conversion exists
+			setError(
+				"No direct conversion is possible between the selected drugs and routes. Please consult a healthcare professional.",
 			);
-			setUsingFallback(true);
 		}
 	};
 
@@ -418,7 +460,7 @@ export default function Component() {
 									</TooltipContent>
 								</Tooltip>
 							</Label>
-							<Select value={fromDrug} onValueChange={setFromDrug}>
+							<Select value={fromDrug} onValueChange={handleFromDrugChange}>
 								<SelectTrigger id="from-drug" className="bg-white">
 									<SelectValue placeholder="Select drug" />
 								</SelectTrigger>
@@ -511,7 +553,7 @@ export default function Component() {
 									</TooltipContent>
 								</Tooltip>
 							</Label>
-							<Select value={toDrug} onValueChange={setToDrug}>
+							<Select value={toDrug} onValueChange={handleToDrugChange}>
 								<SelectTrigger id="to-drug" className="bg-white">
 									<SelectValue placeholder="Select drug" />
 								</SelectTrigger>
