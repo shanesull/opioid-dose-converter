@@ -33,18 +33,16 @@ const opioids = [
 
 // Define types for the conversion ratios
 type OpioidRoute = string;
-type ConversionValue =
-	| number
-	| string
-	| [number, number]
-	| {
-			[key: string | number]: string | number | [number, number];
-			fallbackRatio?: number;
-	  };
+type ConversionValue = number | string | [number, number];
+
+interface ConversionObject {
+	values: Record<string | number, ConversionValue>; // Dynamic keys stored in `values` property
+	fallbackRatio?: number; // Explicitly defined property
+}
 
 interface ConversionRatios {
 	[key: OpioidRoute]: {
-		[key: OpioidRoute]: ConversionValue;
+		[key: OpioidRoute]: ConversionObject;
 	};
 }
 
