@@ -20,6 +20,8 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+const APP_VERSION = "0.3"; // Update this when you release new versions
+
 const opioids = [
 	{ name: "Alfentanil", routes: ["SC"] },
 	{ name: "Buprenorphine", routes: ["Transdermal"] },
@@ -669,6 +671,11 @@ export default function Component() {
 					GOLDEN RULE: When changing from one opioid to another, always convert
 					to Morphine PO first.
 				</p>
+
+				{/* Add this footer */}
+				<footer className="mt-8 text-center text-xs text-gray-500">
+					Version {APP_VERSION}
+				</footer>
 			</div>
 		</TooltipProvider>
 	);
