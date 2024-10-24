@@ -20,7 +20,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const APP_VERSION = "0.3"; // Update this when you release new versions
+const APP_VERSION = "0.4"; // Update this when you release new versions
 
 const opioids = [
 	{ name: "Alfentanil", routes: ["SC"] },
